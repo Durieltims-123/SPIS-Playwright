@@ -37,7 +37,7 @@ test('Validate Inexisting Username', async () => {
 
 
 test('Validate Wrong Password ', async () => {
-    await loginPage.enterUsername('admin_test')
+    await loginPage.enterUsername('durieltims')
     await loginPage.enterPassword('12345')
     await loginPage.clickLoginButton()
     await loginPage.validatePasswordError()
@@ -45,6 +45,6 @@ test('Validate Wrong Password ', async () => {
 
 
 test('Validate Successful Login', async () => {
-    await loginPage.login('admin_test', 'test_password')
+    await loginPage.login('durieltims', 'Password123!')
 })
 
