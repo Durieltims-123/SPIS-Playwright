@@ -62,12 +62,47 @@ pipeline {
             }
         }
 
+        // stage('Update Xray') {
+        //     steps {
+        //         withCredentials([usernamePassword(credentialsId: 'jira-api-credentials', usernameVariable: 'JIRA_USERNAME', passwordVariable: 'JIRA_API_TOKEN')]) {
+        //             powershell '''
+        //                 $headers = @{
+        //                     "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USERNAME:$env:JIRA_API_TOKEN"))
+        //                     "Content-Type" = "application/xml"
+        //                 }
+
+        //                 $resultsPath = "test-results\\*.xml"  # Adjust pattern if needed
+        //                 $files = Get-ChildItem -Path $resultsPath -ErrorAction SilentlyContinue
+
+        //                 if (-not $files) {
+        //                     Write-Error "❌ No JUnit XML test results found in path: $resultsPath"
+        //                     exit 1
+        //                 }
+
+        //                 Write-Output "✅ Found test result files:"
+        //                 $files | ForEach-Object { Write-Output " - $_.FullName" }
+
+        //                 foreach ($file in $files) {
+        //                     try {
+        //                         $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/2.0/import/execution/junit"
+        //                         Write-Output "📤 Uploading test results from: $($file.FullName)"
+        //                         $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $file.FullName -ContentType "application/xml"
+        //                         Write-Output "✅ Upload successful. Response:"
+        //                         $response | ConvertTo-Json -Depth 3
+        //                     } catch {
+        //                         Write-Error "❌ Failed to upload $($file.FullName): $_"
+        //                     }
+        //                 }
+        //             '''
+        //         }
+        //     }
+        // }
         stage('Update Xray') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'jira-api-credentials', usernameVariable: 'JIRA_USERNAME', passwordVariable: 'JIRA_API_TOKEN')]) {
+                withCredentials([string(credentialsId: 'jira-api-token', variable: 'JIRA_API_TOKEN')]) { // Make sure you're using the correct credentials ID
                     powershell '''
                         $headers = @{
-                            "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USERNAME:$env:JIRA_API_TOKEN"))
+                            "Authorization" = "Bearer $env:JIRA_API_TOKEN"  # Use Bearer token for authentication
                             "Content-Type" = "application/xml"
                         }
 
@@ -97,6 +132,7 @@ pipeline {
                 }
             }
         }
+
 
     }
 
