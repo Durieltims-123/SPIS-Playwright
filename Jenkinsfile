@@ -66,24 +66,38 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jira-api-credentials', usernameVariable: 'JIRA_USERNAME', passwordVariable: 'JIRA_API_TOKEN')]) {
                     powershell '''
-                    $resultsPath = "test-results/junit-*.xml"
+                        $headers = @{
+                            "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USERNAME:$env:JIRA_API_TOKEN"))
+                            "Content-Type" = "application/xml"
+                        }
 
-                    $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/1.0/import/execution/junit"
+                        $resultsPath = "test-results\\*.xml"  # Adjust pattern if needed
+                        $files = Get-ChildItem -Path $resultsPath -ErrorAction SilentlyContinue
 
-                    $headers = @{
-                        "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${env:JIRA_USERNAME}:${env:JIRA_API_TOKEN}"))
-                        "Content-Type" = "application/xml"
-                    }
+                        if (-not $files) {
+                            Write-Error "❌ No JUnit XML test results found in path: $resultsPath"
+                            exit 1
+                        }
 
-                    Get-ChildItem -Path $resultsPath | ForEach-Object {
-                        $filePath = $_.FullName
-                        Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $filePath -ContentType "application/xml"
-                        Write-Output "Uploaded test results from: $filePath"
-                    }
+                        Write-Output "✅ Found test result files:"
+                        $files | ForEach-Object { Write-Output " - $_.FullName" }
+
+                        foreach ($file in $files) {
+                            try {
+                                $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/1.0/import/execution/junit"
+                                Write-Output "📤 Uploading test results from: $($file.FullName)"
+                                $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $file.FullName -ContentType "application/xml"
+                                Write-Output "✅ Upload successful. Response:"
+                                $response | ConvertTo-Json -Depth 3
+                            } catch {
+                                Write-Error "❌ Failed to upload $($file.FullName): $_"
+                            }
+                        }
                     '''
                 }
             }
         }
+
     }
 
     post {
