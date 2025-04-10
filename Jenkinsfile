@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM('H/2 * * * *')
+        pollSCM('H/2 * * * *') // Poll GitHub every 2 minutes
     }
 
     environment {
@@ -10,7 +10,7 @@ pipeline {
     }
 
     tools {
-        nodejs 'NodeJS_18'
+        nodejs 'NodeJS_18' // Ensure this is configured in Jenkins → Global Tool Configuration
     }
 
     stages {
@@ -45,7 +45,7 @@ pipeline {
         stage('Run Playwright Tests') {
             steps {
                 powershell '''
-                npx playwright test --reporter="junit" --reporter-options outputFile=test-results/results.xml
+                npx playwright test
                 '''
             }
         }
@@ -71,7 +71,7 @@ pipeline {
                             "Content-Type" = "application/xml"
                         }
 
-                        $resultsPath = "test-results\\*.xml"
+                        $resultsPath = "test-results\\*.xml"  # Adjust pattern if needed
                         $files = Get-ChildItem -Path $resultsPath -ErrorAction SilentlyContinue
 
                         if (-not $files) {
@@ -97,6 +97,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
