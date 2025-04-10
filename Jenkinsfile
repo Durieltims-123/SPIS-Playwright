@@ -53,7 +53,7 @@ pipeline {
         stage('Run Playwright Tests') {
             steps {
                 powershell '''
-                npx playwright test
+                npx playwright test --reporter=junit --output=./test-results
                 '''
             }
         }
@@ -76,16 +76,26 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jira-api-credentials', usernameVariable: 'JIRA_USERNAME', passwordVariable: 'JIRA_API_TOKEN')]) {
                     powershell '''
-                    # Update Xray with the results (this is just an example, replace this with actual Xray integration)
-                    $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/1.0/api/test"
+                    # Path to the JUnit XML results
+                    $resultsPath = "test-results/junit-*.xml"
+
+                    # Xray API URL for creating/updating test execution results
+                    $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/1.0/import/execution/junit"
+
+                    # Authorization for Jira (Xray)
                     $headers = @{
                         "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${JIRA_USERNAME}:${JIRA_API_TOKEN}"))
+                        "Content-Type" = "application/json"
                     }
+
+                    # Prepare the body (JUnit XML test results) to send to Xray
                     $body = @{
-                        "testKey" = "TEST-1"
-                        "status" = "PASS"
+                        "file" = Get-Item -LiteralPath $resultsPath
                     }
-                    $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body ($body | ConvertTo-Json) -ContentType "application/json"
+
+                    # Invoke the Xray API to upload test execution results
+                    $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $body["file"].FullName
+
                     Write-Output $response
                     '''
                 }
