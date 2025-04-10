@@ -38,7 +38,12 @@ pipeline {
             }
             steps {
                 powershell '''
-                docker rm -f selenium-hub || echo 'No container to remove'
+                docker rm -f selenium-hub
+                if ($?) {
+                    Write-Output 'Existing selenium-hub container removed.'
+                } else {
+                    Write-Output 'No container to remove.'
+                }
                 docker pull selenium/standalone-chrome
                 docker run -d -p 4444:4444 --name selenium-hub selenium/standalone-chrome
                 '''
@@ -56,7 +61,12 @@ pipeline {
         stage('Cleanup') {
             steps {
                 powershell '''
-                docker rm -f selenium-hub || echo 'No container to remove'
+                docker rm -f selenium-hub
+                if ($?) {
+                    Write-Output 'selenium-hub container removed.'
+                } else {
+                    Write-Output 'No container to remove.'
+                }
                 '''
             }
         }
@@ -66,7 +76,12 @@ pipeline {
         always {
             echo 'Cleaning up any remaining containers...'
             powershell '''
-            docker rm -f selenium-hub || echo 'No container to remove'
+            docker rm -f selenium-hub
+            if ($?) {
+                Write-Output 'selenium-hub container removed.'
+            } else {
+                Write-Output 'No container to remove.'
+            }
             '''
         }
     }
