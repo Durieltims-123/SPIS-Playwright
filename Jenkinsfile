@@ -97,12 +97,12 @@ pipeline {
         //         }
         //     }
         // }
-        stage('Update Xray') {
+       stage('Update Xray') {
             steps {
-                withCredentials([string(credentialsId: 'jira-api-credentials', variable: 'JIRA_API_TOKEN')]) { // Make sure you're using the correct credentials ID
+                withCredentials([string(credentialsId: 'jira-api-token', variable: 'JIRA_API_TOKEN')]) {
                     powershell '''
                         $headers = @{
-                            "Authorization" = "Bearer $env:JIRA_API_TOKEN"  # Use Bearer token for authentication
+                            "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USERNAME:$env:JIRA_API_TOKEN"))
                             "Content-Type" = "application/xml"
                         }
 
@@ -132,6 +132,7 @@ pipeline {
                 }
             }
         }
+
 
 
     }
