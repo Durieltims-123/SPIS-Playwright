@@ -10,7 +10,7 @@ pipeline {
     }
 
     tools {
-        nodejs 'NodeJS_18' // Update to NodeJS_18 (Make sure it's set up in Jenkins → Global Tool Configuration)
+        nodejs 'NodeJS_18' // Ensure this is configured in Jenkins → Global Tool Configuration
     }
 
     stages {
@@ -22,8 +22,10 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
-                sh 'npx playwright install'
+                powershell '''
+                npm install
+                npx playwright install
+                '''
             }
         }
 
@@ -35,8 +37,8 @@ pipeline {
                 }
             }
             steps {
-                sh '''
-                docker rm -f selenium-hub || true
+                powershell '''
+                docker rm -f selenium-hub || echo 'No container to remove'
                 docker pull selenium/standalone-chrome
                 docker run -d -p 4444:4444 --name selenium-hub selenium/standalone-chrome
                 '''
@@ -45,13 +47,17 @@ pipeline {
 
         stage('Run Playwright Tests') {
             steps {
-                sh 'npx playwright test'
+                powershell '''
+                npx playwright test
+                '''
             }
         }
 
         stage('Cleanup') {
             steps {
-                sh 'docker rm -f selenium-hub || true'
+                powershell '''
+                docker rm -f selenium-hub || echo 'No container to remove'
+                '''
             }
         }
     }
@@ -59,7 +65,9 @@ pipeline {
     post {
         always {
             echo 'Cleaning up any remaining containers...'
-            sh 'docker rm -f selenium-hub || true'
+            powershell '''
+            docker rm -f selenium-hub || echo 'No container to remove'
+            '''
         }
     }
 }
