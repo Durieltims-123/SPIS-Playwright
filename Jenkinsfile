@@ -16,7 +16,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/Durieltims-123/SPIS-Playwright.git'
+                git url: 'https://github.com/Durieltims-123/SPIS-Playwright.git', branch: 'main'
             }
         }
 
