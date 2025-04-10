@@ -6,11 +6,11 @@ pipeline {
     }
 
     environment {
-        NODEJS_VERSION = '14'
+        NODEJS_VERSION = '18' // Update to 18
     }
 
     tools {
-        nodejs 'NodeJS_14' // Set this up in Jenkins → Global Tool Configuration
+        nodejs 'NodeJS_18' // Update to NodeJS_18 (Make sure it's set up in Jenkins → Global Tool Configuration)
     }
 
     stages {
