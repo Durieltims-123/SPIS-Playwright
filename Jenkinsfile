@@ -70,6 +70,27 @@ pipeline {
                 '''
             }
         }
+
+        // Jira Xray Integration
+        stage('Update Xray') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'jira-api-credentials', usernameVariable: 'JIRA_USERNAME', passwordVariable: 'JIRA_API_TOKEN')]) {
+                    powershell '''
+                    # Update Xray with the results (this is just an example, replace this with actual Xray integration)
+                    $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/1.0/api/test"
+                    $headers = @{
+                        "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${JIRA_USERNAME}:${JIRA_API_TOKEN}"))
+                    }
+                    $body = @{
+                        "testKey" = "TEST-1"
+                        "status" = "PASS"
+                    }
+                    $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body ($body | ConvertTo-Json) -ContentType "application/json"
+                    Write-Output $response
+                    '''
+                }
+            }
+        }
     }
 
     post {
