@@ -99,7 +99,7 @@ pipeline {
         // }
         stage('Update Xray') {
             steps {
-                withCredentials([string(credentialsId: 'jira-api-token', variable: 'JIRA_API_TOKEN')]) { // Make sure you're using the correct credentials ID
+                withCredentials([string(credentialsId: 'jira-api-credentials', variable: 'JIRA_API_TOKEN')]) { // Make sure you're using the correct credentials ID
                     powershell '''
                         $headers = @{
                             "Authorization" = "Bearer $env:JIRA_API_TOKEN"  # Use Bearer token for authentication
