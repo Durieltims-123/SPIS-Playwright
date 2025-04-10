@@ -84,7 +84,7 @@ pipeline {
 
                         foreach ($file in $files) {
                             try {
-                                $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/1.0/import/execution/junit"
+                                $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/2.0/import/execution/junit"
                                 Write-Output "📤 Uploading test results from: $($file.FullName)"
                                 $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $file.FullName -ContentType "application/xml"
                                 Write-Output "✅ Upload successful. Response:"
