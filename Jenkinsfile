@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        NODEJS_VERSION = '18' // Update to 18
+        NODEJS_VERSION = '18'
     }
 
     tools {
@@ -36,11 +36,9 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    powershell '''
-                    docker-compose -f docker-compose.yml up -d
-                    '''
-                }
+                powershell '''
+                docker-compose -f docker-compose.yml up -d
+                '''
             }
         }
 
@@ -54,11 +52,13 @@ pipeline {
 
         stage('Cleanup') {
             steps {
-                script {
-                    powershell '''
+                powershell '''
+                try {
                     docker-compose -f docker-compose.yml down
-                    '''
+                } catch {
+                    Write-Host "Cleanup failed, but continuing anyway..."
                 }
+                '''
             }
         }
 
@@ -71,7 +71,7 @@ pipeline {
                     $url = "https://dswd-team-di9z8gya.atlassian.net/rest/raven/1.0/import/execution/junit"
 
                     $headers = @{
-                        "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${JIRA_USERNAME}:${JIRA_API_TOKEN}"))
+                        "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${env:JIRA_USERNAME}:${env:JIRA_API_TOKEN}"))
                         "Content-Type" = "application/xml"
                     }
 
@@ -89,11 +89,13 @@ pipeline {
     post {
         always {
             echo 'Cleaning up any remaining containers...'
-            script {
-                powershell '''
-                docker-compose -f docker-compose.yml down || true
-                '''
+            powershell '''
+            try {
+                docker-compose -f docker-compose.yml down
+            } catch {
+                Write-Host "Post-cleanup failed, but job completed."
             }
+            '''
         }
     }
 }
