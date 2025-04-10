@@ -37,7 +37,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
+                    powershell '''
                     docker-compose -f docker-compose.yml up -d
                     '''
                 }
@@ -55,7 +55,7 @@ pipeline {
         stage('Cleanup') {
             steps {
                 script {
-                    sh '''
+                    powershell '''
                     docker-compose -f docker-compose.yml down
                     '''
                 }
@@ -90,7 +90,7 @@ pipeline {
         always {
             echo 'Cleaning up any remaining containers...'
             script {
-                sh '''
+                powershell '''
                 docker-compose -f docker-compose.yml down || true
                 '''
             }
