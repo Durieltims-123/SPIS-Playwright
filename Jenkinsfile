@@ -1,43 +1,65 @@
 pipeline {
     agent any
 
+    triggers {
+        pollSCM('H/2 * * * *') // Poll GitHub every 2 minutes
+    }
+
     environment {
-        DOCKER_HUB_USERNAME = 'your_dockerhub_username'
-        DOCKER_HUB_PASSWORD = 'your_dockerhub_password'
         NODEJS_VERSION = '14'
     }
 
     tools {
-        nodejs 'NodeJS_14'
+        nodejs 'NodeJS_14' // Set this up in Jenkins → Global Tool Configuration
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/yourusername/your-repo.git'
+                git url: 'https://github.com/Durieltims-123/SPIS-Playwright.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                script {
-                    sh 'npm install'
-                    sh 'npm install playwright-webdriver'
+                sh 'npm install'
+                sh 'npx playwright install'
+            }
+        }
+
+        // 👇 OPTIONAL: Only if you're using Playwright in WebDriver mode with Selenium Grid
+        stage('Start Selenium Grid') {
+            when {
+                expression {
+                    return fileExists('playwright.config.js') && readFile('package.json').contains('playwright-webdriver')
                 }
+            }
+            steps {
+                sh '''
+                docker rm -f selenium-hub || true
+                docker pull selenium/standalone-chrome
+                docker run -d -p 4444:4444 --name selenium-hub selenium/standalone-chrome
+                '''
             }
         }
 
         stage('Run Playwright Tests') {
             steps {
-                script {
-                    sh 'npx playwright test'
-                }
+                sh 'npx playwright test'
             }
         }
 
-        stage('Docker Setup') {
+        stage('Cleanup') {
             steps {
-                script {
-                    sh 'docker info'
-                    sh 'docker pull selenium/standalone-chrome'
-                    sh 'docker run -d -p 4444:4444 --name selenium-hub selenium/standalone-chrome'
+                sh 'docker rm -f selenium-hub || true'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up any remaining containers...'
+            sh 'docker rm -f selenium-hub || true'
+        }
+    }
+}

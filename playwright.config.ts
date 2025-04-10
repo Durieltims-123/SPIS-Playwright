@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [['junit', { outputFile: 'results.xml' }]],
   // use: {
   //   browserName: 'chromium',
   //   channel: 'chrome', // Use Google Chrome
