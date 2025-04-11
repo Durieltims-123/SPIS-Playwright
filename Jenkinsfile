@@ -108,7 +108,7 @@ pipeline {
                     powershell '''
                         $headers = @{
                             "Authorization" = "Basic " + [Convert]::ToBase64String(
-                                [Text.Encoding]::ASCII.GetBytes("$env:JIRA_USERNAME:$env:JIRA_API_TOKEN")
+                                [Text.Encoding]::ASCII.GetBytes("$($env:JIRA_USERNAME):$($env:JIRA_API_TOKEN)")
                             )
                             "Content-Type" = "application/xml"
                         }
