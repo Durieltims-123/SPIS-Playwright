@@ -98,41 +98,78 @@ pipeline {
     //     }
     // }
 
-        stage('Upload to Xray') {
+        // stage('Upload to Xray') {
+        //     steps {
+        //         withCredentials([usernamePassword(
+        //             credentialsId: 'jira-api-credentials',
+        //             usernameVariable: 'JIRA_USERNAME',
+        //             passwordVariable: 'JIRA_API_TOKEN'
+        //         )]) {
+        //             powershell '''
+        //                 $headers = @{
+        //                     "Authorization" = "Basic " + [Convert]::ToBase64String(
+        //                         [Text.Encoding]::ASCII.GetBytes("$($env:JIRA_USERNAME):$($env:JIRA_API_TOKEN)")
+        //                     )
+        //                     "Content-Type" = "application/xml"
+        //                 }
+
+        //                 $filePath = "test-results\\results.xml"
+
+        //                 if (-not (Test-Path $filePath)) {
+        //                     Write-Error "❌ JUnit result file not found: $filePath"
+        //                     exit 1
+        //                 }
+
+        //                 Write-Output "📤 Uploading test results from: $filePath"
+        //                 $url = "https://xray.cloud.getxray.app/api/v2/import/execution/junit"
+        //                 try {
+        //                     $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $filePath -ContentType "application/xml"
+        //                     Write-Output "✅ Upload successful. Response:"
+        //                     $response | ConvertTo-Json -Depth 3
+        //                 } catch {
+        //                     Write-Error "❌ Failed to upload $filePath: $_"
+        //                 }
+        //             '''
+        //         }
+        //     }
+        // }
+
+            stage('Update Xray') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'jira-api-credentials',
-                    usernameVariable: 'JIRA_USERNAME',
-                    passwordVariable: 'JIRA_API_TOKEN'
-                )]) {
+                withCredentials([string(credentialsId: 'jira-api-token', variable: 'JIRA_API_TOKEN')]) {
                     powershell '''
                         $headers = @{
-                            "Authorization" = "Basic " + [Convert]::ToBase64String(
-                                [Text.Encoding]::ASCII.GetBytes("$($env:JIRA_USERNAME):$($env:JIRA_API_TOKEN)")
-                            )
+                            "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USERNAME:$env:JIRA_API_TOKEN"))
                             "Content-Type" = "application/xml"
                         }
 
-                        $filePath = "test-results\\results.xml"
+                        $resultsPath = "test-results\\*.xml"  # Adjust pattern if needed
+                        $files = Get-ChildItem -Path $resultsPath -ErrorAction SilentlyContinue
 
-                        if (-not (Test-Path $filePath)) {
-                            Write-Error "❌ JUnit result file not found: $filePath"
+                        if (-not $files) {
+                            Write-Error "❌ No JUnit XML test results found in path: $resultsPath"
                             exit 1
                         }
 
-                        Write-Output "📤 Uploading test results from: $filePath"
-                        $url = "https://xray.cloud.getxray.app/api/v2/import/execution/junit"
-                        try {
-                            $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $filePath -ContentType "application/xml"
-                            Write-Output "✅ Upload successful. Response:"
-                            $response | ConvertTo-Json -Depth 3
-                        } catch {
-                            Write-Error "❌ Failed to upload $filePath: $_"
+                        Write-Output "✅ Found test result files:"
+                        $files | ForEach-Object { Write-Output " - $_.FullName" }
+
+                        foreach ($file in $files) {
+                            try {
+                                $url = "https://xray.cloud.getxray.app/api/v2/import/execution/junit"
+                                Write-Output "📤 Uploading test results from: $($file.FullName)"
+                                $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $file.FullName -ContentType "application/xml"
+                                Write-Output "✅ Upload successful. Response:"
+                                $response | ConvertTo-Json -Depth 3
+                            } catch {
+                                Write-Error "❌ Failed to upload $($file.FullName): $_"
+                            }
                         }
                     '''
                 }
             }
         }
+
 
 
 
