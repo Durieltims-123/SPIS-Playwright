@@ -104,7 +104,11 @@ pipeline {
                     $token = Get-Content -Path "xray.token"
 
                     Write-Host "📤 Uploading test results to Xray Cloud..."
-                    $response = Invoke-RestMethod -Uri "https://xray.cloud.getxray.app/api/v2/import/execution/junit" `
+
+                    # Add projectKey to the URL
+                    $url = "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=SPIS"
+
+                    $response = Invoke-RestMethod -Uri $url `
                         -Method Post `
                         -Headers @{ Authorization = "Bearer $token" } `
                         -InFile $resultsPath `
@@ -112,6 +116,7 @@ pipeline {
 
                     Write-Host "✅ Upload complete."
                     $response | ConvertTo-Json -Depth 3
+
                 '''
             }
         }
