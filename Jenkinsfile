@@ -45,7 +45,7 @@ pipeline {
         stage('Run Playwright Tests') {
             steps {
                 powershell '''
-                npx playwright test --headless
+                npx playwright test
                 '''
             }
         }

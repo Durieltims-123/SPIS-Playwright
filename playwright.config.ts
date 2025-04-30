@@ -20,7 +20,7 @@ export default defineConfig({
   use: {
     browserName: 'chromium',
     channel: 'chrome', // Use Google Chrome
-    headless: false,
+    headless: true,
     storageState: 'storageState.json', // Stores session & cookies
   },
 
