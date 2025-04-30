@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-    triggers {
-        pollSCM('H/10 * * * *') // Poll GitHub every 2 minutes
-    }
+    // triggers {
+    //     pollSCM('H/10 * * * *') // Poll GitHub every 2 minutes
+    // }
 
     environment {
         NODEJS_VERSION = '18'

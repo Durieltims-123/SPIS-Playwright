@@ -48,3 +48,7 @@ test('SPIS-00004 | Validate Successful Login', async () => {
     await loginPage.login('durieltims', 'Password123!')
 })
 
+test('SPIS-00005 | Throws an error', async () => {
+    await loginPage.login('durieltims', 'Password12345!')
+})
+
