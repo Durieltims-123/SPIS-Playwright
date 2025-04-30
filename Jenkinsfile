@@ -136,7 +136,7 @@ pipeline {
 
             stage('Update Xray') {
             steps {
-                withCredentials([string(credentialsId: 'jira-api-token', variable: 'JIRA_API_TOKEN')]) {
+                withCredentials([string(credentialsId: 'jira-api-token2', variable: 'JIRA_API_TOKEN')]) {
                     powershell '''
                         $headers = @{
                             "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USERNAME:$env:JIRA_API_TOKEN"))
