@@ -30,8 +30,7 @@ pipeline {
         }
 
         stage('Start Selenium Grid') {
-            when { expression { false } } // temporarily skip this stage
-            when {
+           when {
                 expression {
                     return fileExists('docker-compose.yml')
                 }
