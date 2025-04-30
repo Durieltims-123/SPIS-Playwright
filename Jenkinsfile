@@ -62,7 +62,6 @@ pipeline {
             }
         }
 
-        stages {
         stage('Authenticate to Xray') {
             steps {
                 withCredentials([usernamePassword(
@@ -91,7 +90,7 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Upload Results to Xray') {
             steps {
                 powershell '''
