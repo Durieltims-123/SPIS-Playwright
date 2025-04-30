@@ -30,6 +30,7 @@ pipeline {
         }
 
         stage('Start Selenium Grid') {
+            when { expression { false } } // temporarily skip this stage
             when {
                 expression {
                     return fileExists('docker-compose.yml')
@@ -45,7 +46,7 @@ pipeline {
         stage('Run Playwright Tests') {
             steps {
                 powershell '''
-                npx playwright test
+                npx playwright test --headless
                 '''
             }
         }
