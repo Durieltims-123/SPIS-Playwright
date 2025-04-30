@@ -91,11 +91,13 @@ pipeline {
             }
         }
         
-        stage('Upload Results to Xray') {
+       stage('Upload Results to Xray') {
             steps {
                 powershell '''
-                    if (-not (Test-Path $env:RESULTS_PATH)) {
-                        Write-Error "❌ Test result file not found: $env:RESULTS_PATH"
+                    $resultsPath = "test-results\\results.xml"  # Change if your path is different
+
+                    if (-not (Test-Path $resultsPath)) {
+                        Write-Error "❌ Test result file not found: $resultsPath"
                         exit 1
                     }
 
@@ -105,7 +107,7 @@ pipeline {
                     $response = Invoke-RestMethod -Uri "https://xray.cloud.getxray.app/api/v2/import/execution/junit" `
                         -Method Post `
                         -Headers @{ Authorization = "Bearer $token" } `
-                        -InFile $env:RESULTS_PATH `
+                        -InFile $resultsPath `
                         -ContentType "application/xml"
 
                     Write-Host "✅ Upload complete."
@@ -113,6 +115,7 @@ pipeline {
                 '''
             }
         }
+
 
     }
 
