@@ -27,8 +27,12 @@ test('SPIS-00001 | Validate Empty Username and Password', async () => {
     await loginPage.validateUsernameError
 })
 
+test('SPIS-00002 | Throws an error', async () => {
+    await loginPage.login('durieltims', 'Password12345!')
+})
 
-test('SPIS-00002 | Validate Inexisting Username', async () => {
+
+test('SPIS-00003 | Validate Inexisting Username', async () => {
     await loginPage.enterUsername('admin_test123')
     await loginPage.enterPassword('12345')
     await loginPage.clickLoginButton()
@@ -36,7 +40,7 @@ test('SPIS-00002 | Validate Inexisting Username', async () => {
 })
 
 
-test('SPIS-00003 | Validate Wrong Password ', async () => {
+test('SPIS-00004 | Validate Wrong Password ', async () => {
     await loginPage.enterUsername('durieltims')
     await loginPage.enterPassword('12345')
     await loginPage.clickLoginButton()
@@ -44,11 +48,9 @@ test('SPIS-00003 | Validate Wrong Password ', async () => {
 })
 
 
-test('SPIS-00004 | Validate Successful Login', async () => {
+test('SPIS-00005 | Validate Successful Login', async () => {
     await loginPage.login('durieltims', 'Password123!')
 })
 
-test('SPIS-00005 | Throws an error', async () => {
-    await loginPage.login('durieltims', 'Password12345!')
-})
+
 

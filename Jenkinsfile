@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    // triggers {
-    //     pollSCM('H/10 * * * *') // Poll GitHub every 2 minutes
-    // }
-
     environment {
         NODEJS_VERSION = '18'
     }
@@ -30,7 +26,7 @@ pipeline {
         }
 
         stage('Start Selenium Grid') {
-           when {
+            when {
                 expression {
                     return fileExists('docker-compose.yml')
                 }
@@ -44,9 +40,18 @@ pipeline {
 
         stage('Run Playwright Tests') {
             steps {
-                powershell '''
-                npx playwright test
-                '''
+                script {
+                    def exitCode = powershell(script: '''
+                        npx playwright test
+                        exit $LASTEXITCODE
+                    ''', returnStatus: true)
+
+                    // Handle the failed tests but continue
+                    if (exitCode != 0) {
+                        echo "⚠️ Some Playwright tests failed (exit code: ${exitCode}), continuing to Xray upload..."
+                        currentBuild.result = 'UNSTABLE' // Optional: mark build as unstable
+                    }
+                }
             }
         }
 
@@ -90,8 +95,8 @@ pipeline {
                 }
             }
         }
-        
-       stage('Upload Results to Xray') {
+
+        stage('Upload Results to Xray') {
             steps {
                 powershell '''
                     $resultsPath = "test-results\\results.xml"  # Change if your path is different
@@ -116,11 +121,9 @@ pipeline {
 
                     Write-Host "✅ Upload complete."
                     $response | ConvertTo-Json -Depth 3
-
                 '''
             }
         }
-
 
     }
 
