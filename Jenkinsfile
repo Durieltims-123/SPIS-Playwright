@@ -173,7 +173,7 @@ pipeline {
 
     }
 
-    post {
+    // post {
         // always {
         //     echo 'Cleaning up any remaining containers...'
         //     powershell '''
@@ -184,5 +184,5 @@ pipeline {
         //     }
         //     '''
         // }
-    }
+    // }
 }
