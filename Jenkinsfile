@@ -141,13 +141,12 @@ pipeline {
 
                     Write-Host "✅ Authentication successful!"
                     $response
-                    '''
-                
+                    ''' 
 
+                }
             }
+
         }
-
-
     }
 
     // post {
