@@ -125,6 +125,53 @@ pipeline {
             }
         }
 
+
+        stage('Create Jira Bugs for Failed Tests') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'jira-api-token',
+                    usernameVariable: 'JIRA_EMAIL',
+                    passwordVariable: 'JIRA_API_TOKEN'
+                )]) {
+                    powershell '''
+                        [xml]$junit = Get-Content "test-results\\results.xml"
+                        $failedTests = $junit.testsuite.testcase | Where-Object { $_.failure }
+
+                        if ($failedTests.Count -eq 0) {
+                            Write-Host "✅ No failed tests to report to Jira."
+                            return
+                        }
+
+                        foreach ($test in $failedTests) {
+                            $testName = $test.name
+                            $className = $test.classname
+                            $errorMsg = $test.failure.'#text'
+
+                            $payload = @{
+                                fields = @{
+                                    project = @{ key = "SPIS" }
+                                    summary = "❌ Playwright test failed: $testName"
+                                    description = "Test **$testName** in **$className** failed.\n\nError: `$errorMsg`\n\nSee Jenkins build #$env:BUILD_NUMBER"
+                                    issuetype = @{ name = "Bug" }
+                                }
+                            } | ConvertTo-Json -Depth 10
+
+                            $headers = @{
+                                "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_EMAIL:$env:JIRA_API_TOKEN"))
+                                "Content-Type" = "application/json"
+                            }
+
+                            $response = Invoke-RestMethod -Uri "https://dswd-team-di9z8gya.atlassian.net/rest/api/3/issue" `
+                                -Method Post -Headers $headers -Body $payload
+
+                            Write-Host "🐞 Created Jira bug: $($response.key)"
+                        }
+                    '''
+                }
+            }
+        }
+
+
     }
 
     post {
