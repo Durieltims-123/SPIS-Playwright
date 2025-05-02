@@ -125,48 +125,66 @@ pipeline {
         //     }
         // }
 
-        stage('Create Jira Bugs for Failed Tests') {
+        stage('Create Jira Bug if Failed') {
+            when {
+                expression {
+                    return currentBuild.result == 'UNSTABLE' || currentBuild.result == 'FAILURE'
+                }
+            }
             steps {
                 withCredentials([usernamePassword(
-                credentialsId: 'jira-api-credentials',
-                usernameVariable: 'JIRA_EMAIL',
-                passwordVariable: 'JIRA_API_TOKEN'
-            )]) {
-                powershell '''
-                    $encodedAuth = [Convert]::ToBase64String(
-                        [Text.Encoding]::ASCII.GetBytes("${env:JIRA_EMAIL}:${env:JIRA_API_TOKEN}")
-                    )
+                    credentialsId: 'jira-api-credentials',
+                    usernameVariable: 'JIRA_EMAIL',
+                    passwordVariable: 'JIRA_API_TOKEN'
+                )]) {
+                    powershell '''
+                        try {
+                            $encodedAuth = [Convert]::ToBase64String(
+                                [Text.Encoding]::ASCII.GetBytes("${env:JIRA_EMAIL}:${env:JIRA_API_TOKEN}")
+                            )
 
-                    $headers = @{
-                        "Authorization" = "Basic $encodedAuth"
-                        "Content-Type"  = "application/json"
-                    }
+                            $headers = @{
+                                "Authorization" = "Basic $encodedAuth"
+                                "Content-Type"  = "application/json"
+                            }
 
-                    $body = @{
-                        fields = @{
-                            project     = @{ key = "SPIS" }
-                            summary     = "❌ Playwright test failure detected in Jenkins"
-                            description = "One or more Playwright tests failed. Please review the attached logs or test results."
-                            issuetype   = @{ name = "Bug" }
+                            $body = @{
+                                fields = @{
+                                    project     = @{ key = "SPIS" }
+                                    summary     = "❌ Playwright test failure detected in Jenkins"
+                                    description = "Automated alert: One or more Playwright tests failed during CI. See Jenkins job logs for details."
+                                    issuetype   = @{ name = "Bug" }
+                                }
+                            } | ConvertTo-Json -Depth 10 -Compress
+
+                            Write-Host "📤 Sending JSON payload to Jira:"
+                            Write-Host $body
+
+                            $url = "https://durieltims.atlassian.net/rest/api/3/issue"
+                            $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body $body
+                            Write-Host "✅ Jira issue created: $($response.key)"
                         }
-                    } | ConvertTo-Json -Depth 10
+                        catch {
+                            Write-Host "❌ Failed to create Jira issue."
+                            Write-Host "🔻 Exception: $($_.Exception.Message)"
 
-                    $url = "https://durieltims.atlassian.net/rest/api/3/issue"
+                            try {
+                                $resp = $_.Exception.Response
+                                if ($resp -ne $null) {
+                                    $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
+                                    $respBody = $reader.ReadToEnd()
+                                    Write-Host "📋 Jira Response Body: $respBody"
+                                } else {
+                                    Write-Host "⚠️ No response body received from Jira."
+                                }
+                            } catch {
+                                Write-Host "⚠️ Could not read error response from Jira."
+                            }
 
-                    try {
-                        $response = Invoke-RestMethod -Uri $url `
-                            -Method Post `
-                            -Headers $headers `
-                            -Body $body
-
-                        Write-Host "✅ Jira issue created: $($response.key)"
-                    } catch {
-                        Write-Error "❌ Failed to create Jira issue. $_"
-                        exit 1
-                    }
-                '''
-            }
-
+                            exit 1
+                        }
+                    '''
+                }
             }
         }
 
