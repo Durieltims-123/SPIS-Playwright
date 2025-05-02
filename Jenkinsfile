@@ -133,7 +133,7 @@ pipeline {
                     passwordVariable: 'JIRA_API_TOKEN'
                 )]) {
                     powershell '''
-                    $url = "https://your-domain.atlassian.net/rest/api/2/myself"
+                    $url = "https://durieltims.atlassian.net/rest/api/2/myself"
 
                     $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USER:$env:JIRA_API_TOKEN"))
 
