@@ -129,7 +129,7 @@ pipeline {
         stage('Create Jira Bugs for Failed Tests') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'jira-api-token',
+                    credentialsId: 'jira-api-credentials',
                     usernameVariable: 'JIRA_EMAIL',
                     passwordVariable: 'JIRA_API_TOKEN'
                 )]) {
