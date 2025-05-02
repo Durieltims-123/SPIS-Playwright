@@ -171,7 +171,7 @@ pipeline {
                                 "Content-Type" = "application/json"
                             }
 
-                            $response = Invoke-RestMethod -Uri "https://dswd-team-di9z8gya.atlassian.net/rest/api/3/issue" `
+                            $response = Invoke-RestMethod -Uri "https://durieltims.atlassian.net/rest/api/3/issue" `
                                 -Method Post -Headers $headers -Body $payload
 
                             Write-Host "🐞 Created Jira bug: $($response.key)"
