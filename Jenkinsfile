@@ -125,7 +125,6 @@ pipeline {
             }
         }
 
-
         stage('Create Jira Bugs for Failed Tests') {
             steps {
                 withCredentials([usernamePassword(
@@ -181,6 +180,7 @@ pipeline {
                 }
             }
         }
+
 
     }
 
