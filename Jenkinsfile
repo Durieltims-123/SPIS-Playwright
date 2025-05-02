@@ -133,17 +133,24 @@ pipeline {
                     passwordVariable: 'JIRA_API_TOKEN'
                 )]) {
                     powershell '''
-                    $url = "https://durieltims.atlassian.net/rest/api/2/myself"
+                    $pair = "$env:JIRA_USER:$env:JIRA_API_TOKEN"
+                    $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+                    $encoded = [System.Convert]::ToBase64String($bytes)
 
-                    $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USER:$env:JIRA_API_TOKEN"))
+                    $headers = @{
+                        Authorization = "Basic $encoded"
+                        Accept = "application/json"
+                    }
 
-                    $response = Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Basic $base64AuthInfo" } -Method Get
+                    $url = "https://durieltims.atlassian.net/rest/api/3/myself"
 
-                    Write-Host "✅ Authentication successful!"
-                    $response
-                    ''' 
+                    Write-Host "🔍 Checking Jira authentication..."
+                    $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Get
 
+                    Write-Host "✅ Authenticated as: $($response.displayName)"
+                    '''
                 }
+
             }
 
         }
