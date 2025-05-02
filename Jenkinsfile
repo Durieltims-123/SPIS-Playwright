@@ -125,66 +125,25 @@ pipeline {
         //     }
         // }
 
-        stage('Create Jira Bug if Failed') {
-            when {
-                expression {
-                    return currentBuild.result == 'UNSTABLE' || currentBuild.result == 'FAILURE'
-                }
-            }
+        stage('Create Jira Bugs for Failed Tests') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'jira-api-credentials',
-                    usernameVariable: 'JIRA_EMAIL',
+                    usernameVariable: 'JIRA_USER',
                     passwordVariable: 'JIRA_API_TOKEN'
                 )]) {
                     powershell '''
-                        try {
-                            $encodedAuth = [Convert]::ToBase64String(
-                                [Text.Encoding]::ASCII.GetBytes("${env:JIRA_EMAIL}:${env:JIRA_API_TOKEN}")
-                            )
+                    $url = "https://your-domain.atlassian.net/rest/api/2/myself"
 
-                            $headers = @{
-                                "Authorization" = "Basic $encodedAuth"
-                                "Content-Type"  = "application/json"
-                            }
+                    $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$env:JIRA_USER:$env:JIRA_API_TOKEN"))
 
-                            $body = @{
-                                fields = @{
-                                    project     = @{ key = "SPIS" }
-                                    summary     = "❌ Playwright test failure detected in Jenkins"
-                                    description = "Automated alert: One or more Playwright tests failed during CI. See Jenkins job logs for details."
-                                    issuetype   = @{ name = "Bug" }
-                                }
-                            } | ConvertTo-Json -Depth 10 -Compress
+                    $response = Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Basic $base64AuthInfo" } -Method Get
 
-                            Write-Host "📤 Sending JSON payload to Jira:"
-                            Write-Host $body
-
-                            $url = "https://durieltims.atlassian.net/rest/api/3/issue"
-                            $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body $body
-                            Write-Host "✅ Jira issue created: $($response.key)"
-                        }
-                        catch {
-                            Write-Host "❌ Failed to create Jira issue."
-                            Write-Host "🔻 Exception: $($_.Exception.Message)"
-
-                            try {
-                                $resp = $_.Exception.Response
-                                if ($resp -ne $null) {
-                                    $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
-                                    $respBody = $reader.ReadToEnd()
-                                    Write-Host "📋 Jira Response Body: $respBody"
-                                } else {
-                                    Write-Host "⚠️ No response body received from Jira."
-                                }
-                            } catch {
-                                Write-Host "⚠️ Could not read error response from Jira."
-                            }
-
-                            exit 1
-                        }
+                    Write-Host "✅ Authentication successful!"
+                    $response
                     '''
-                }
+                
+
             }
         }
 
