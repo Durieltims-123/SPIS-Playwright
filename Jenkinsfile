@@ -128,28 +128,35 @@ pipeline {
         stage('Create Jira Bugs for Failed Tests') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'jira-api-credentials',
-                    usernameVariable: 'JIRA_USER',
-                    passwordVariable: 'JIRA_API_TOKEN'
-                )]) {
-                    powershell '''
-                    $pair = "$env:JIRA_USER:$env:JIRA_API_TOKEN"
-                    $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
-                    $encoded = [System.Convert]::ToBase64String($bytes)
-
-                    $headers = @{
-                        Authorization = "Basic $encoded"
-                        Accept = "application/json"
-                    }
-
-                    $url = "https://durieltims.atlassian.net/rest/api/3/myself"
-
-                    Write-Host "🔍 Checking Jira authentication..."
-                    $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Get
-
-                    Write-Host "✅ Authenticated as: $($response.displayName)"
-                    '''
+                credentialsId: 'jira-api-credentials',
+                usernameVariable: 'JIRA_USER',
+                passwordVariable: 'JIRA_API_TOKEN'
+            )]) {
+                powershell '''
+                Write-Host "🔐 Testing Jira authentication with:"
+                Write-Host "    Username: $env:JIRA_USER"
+                
+                $authString = "$env:JIRA_USER:$env:JIRA_API_TOKEN"
+                $authBytes = [System.Text.Encoding]::UTF8.GetBytes($authString)
+                $authEncoded = [Convert]::ToBase64String($authBytes)
+                
+                $headers = @{
+                    Authorization = "Basic $authEncoded"
+                    Accept = "application/json"
                 }
+
+                $url = "https://durieltims.atlassian.net/rest/api/3/myself"
+                
+                Write-Host "🔍 Sending request to $url"
+                try {
+                    $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Get
+                    Write-Host "✅ Authentication successful. Logged in as: $($response.displayName)"
+                } catch {
+                    Write-Host "❌ Authentication failed: $($_.Exception.Message)"
+                }
+                '''
+            }
+
 
             }
 
